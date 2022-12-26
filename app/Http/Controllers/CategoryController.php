@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,8 @@ class CategoryController extends Controller
     {
         $data = Category::paginate(5);
 
-        return response()->json($data);
+        // return response()->json($data);
+        return CategoryResource::collection($data);
     }
 
     /**
