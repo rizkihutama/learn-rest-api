@@ -36,9 +36,9 @@ class CategoryController extends Controller
 
             DB::commit();
         } catch (\Exception $e) {
+            DB::rollBack();
 
             return $this->sendError($e->getMessage(), [], $e->getCode());
-            DB::rollBack();
         }
 
         return $this->sendResponse($data, 'success', 201);
@@ -79,6 +79,8 @@ class CategoryController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+
+            return $this->sendError($e->getMessage(), [], $e->getCode());
         }
 
         return $this->sendResponse($result, 'success', 201);
