@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryValidateRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -15,77 +16,84 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $data = Category::paginate(5);
+        $data = Category::all();
+        $result = CategoryResource::collection($data);
 
-        // return response()->json($data);
-        return CategoryResource::collection($data);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return $this->sendResponse($result, 'success');
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\CategoryValidateRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CategoryValidateRequest $request)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $data = Category::create($request->validated());
+
+            DB::commit();
+        } catch (\Exception $e) {
+
+            return $this->sendError($e->getMessage(), [], $e->getCode());
+            DB::rollBack();
+        }
+
+        return $this->sendResponse($data, 'success', 201);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Category  $Category
+     * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function show(Category $Category)
+    public function show(Category $category)
     {
-        $data = Category::find($Category);
+        $data = Category::find($category);
 
-        return response()->json($data);
-    }
+        if (!$data) return abort(404, 'Category not found');
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Category  $Category
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Category $Category)
-    {
-        //
+        $result = CategoryResource::collection($data);
+
+        return $this->sendResponse($result, 'success');
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Category  $Category
+     * @param  \App\Http\Requests\CategoryValidateRequest  $request
+     * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Category $Category)
+    public function update(CategoryValidateRequest $request, Category $category)
     {
-        //
+        DB::beginTransaction();
+        try {
+            $category->update($request->validated());
+
+            $result = new CategoryResource($category);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+        }
+
+        return $this->sendResponse($result, 'success', 201);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Category  $Category
+     * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Category $Category)
+    public function destroy(Category $category)
     {
-        //
+        $category->delete();
+
+        return response()->noContent();
     }
 }
