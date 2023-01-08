@@ -16,10 +16,8 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $data = Category::all();
-        $result = CategoryResource::collection($data);
-
-        return $this->sendResponse($result, 'success');
+        $result = CategoryResource::collection(Category::paginate());
+        return $result;
     }
 
     /**
@@ -52,13 +50,8 @@ class CategoryController extends Controller
      */
     public function show(Category $category)
     {
-        $data = Category::find($category);
-
-        if (!$data) return abort(404, 'Category not found');
-
-        $result = CategoryResource::collection($data);
-
-        return $this->sendResponse($result, 'success');
+        $result = new CategoryResource(Category::findOrFail($category->id_category));
+        return $result;
     }
 
     /**
@@ -73,7 +66,6 @@ class CategoryController extends Controller
         DB::beginTransaction();
         try {
             $category->update($request->validated());
-
             $result = new CategoryResource($category);
 
             DB::commit();
